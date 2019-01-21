@@ -1,50 +1,61 @@
+var PROMOTED_LITTERALS = new Set([
+  "Promoted",
+  "Sponsorisé",
+  "Promocionado",
+  "Patrocinat",
+  "Sponsorizzato",
+  "Promovido",
+  "Gesponsert",
+  "Uitgelicht",
+  "Promoveret",
+  "Promotert",
+  "Promowane",
+  "Sponzorira",
+  "Ajánlott",
+]);
+
 var RemovePromotedTweets = RemovePromotedTweets || {
 
   init: function () {
-    var elementsCalledStreamItems; // getElementsByClassName returns an array of
-                                   // <ol> elements called 'stream-items'. This
-                                   // is a list of *containers*, not a list of
-                                   // the actual tweets.
-    var streamObserver;            // Observer that will fire whenever new
-                                   // tweets are appended
-    var run = this.run;            // Bring this.run() into scope so we can
-                                   // run it in the observer
-
-    // We only need to monitor the childList of stream-items
-
-    var observerOptions = {
-      childList: true,
-      attributes: false,
-      characterData: false
-    };
+    var observer;        // Observer that will fire whenever new tweets are appended
+    var run = this.run;  // Bring this.run() into scope so we can run it in the observer
 
     // Run the remover once when the page is loaded
-
     run();
 
-    // Find the 'stream-items' container. This should returns 3 <ol> elements,
-    // and the first element in the array is the relevant one.
+    root = document.getElementById('react-root');
 
-    elementsCalledStreamItems = document.getElementsByClassName('stream-items');
-
-    // If we get the array that we expected, then we can install the
+    // If we get the root that we expected, then we can install the
     // observer and re-run the callback whenever new tweets are loaded.
-
-    if (elementsCalledStreamItems.length > 0) {
-      streamObserver = new MutationObserver(function(mutations) {
+    if (root) {
+      observer = new MutationObserver(function (mutations) {
         run();
       });
-      streamObserver.observe(elementsCalledStreamItems[0], observerOptions);
+      observer.observe(root, { childList: true, subtree: true });
     }
   },
 
   run: function () {
-    var tweetsToRemove = document.getElementsByClassName('promoted-tweet');
+    var tweetsToRemove = [];
+
+    Array.from(document.getElementsByTagName('article')).forEach(function (tweet) {
+
+      Array.from(tweet.getElementsByTagName('div')).forEach(function (div) {
+
+        if (PROMOTED_LITTERALS.has(div.textContent)) {
+          // console.log('Sponsored tweet found !');
+          tweetsToRemove.push(tweet);
+        }
+
+      });
+    });
 
     // Loop through promoted tweets and remove them
-    while (tweetsToRemove.length > 0) {
-      tweetsToRemove[0].parentNode.removeChild(tweetsToRemove[0]);
-    }
+    tweetsToRemove.forEach(function (t) {
+      if (t.parentNode) {
+        t.parentNode.removeChild(t);
+      }
+    });
   }
 }
 
